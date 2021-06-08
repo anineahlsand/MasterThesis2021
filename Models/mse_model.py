@@ -21,16 +21,20 @@ np.set_printoptions(threshold=np.inf)
 
 def get_data():
     df = pd.read_csv('Data/full_data_set_double.csv', header=0)
-    full = pd.read_csv('Data/full_data_set.csv', header=0)
-    pre_ts = []
-    post_ts = []
-    all_ts = []
-    q_ts = []
-    input_var = []
-    T_s = []
+    train_x = []
+    train_y = []
+    train_q = []
+    train_t = []
+    test_x = []
+    test_y = []
+    test_q = []
+    test_t = []
+    pred_x = []
+    pred_y = []
+    pred_q = []
+    pred_t = []
 
     for index, row in df.iterrows():
-        input_variables = []
         if pd.isna(row['clinical_visits_post_24h_dbp_mean_value']) or pd.isna(row['clinical_visits_post_24h_sbp_mean_value']):
             continue
         if pd.isna(row['clinical_visits_pre_24h_sbp_mean_value']) or pd.isna(row['clinical_visits_pre_24h_dbp_mean_value']):
@@ -42,82 +46,146 @@ def get_data():
         # Drop curves that are of vary low quality
         if index == 8 or index == 38 or index == 39:
             continue
+        if df.roottable_case_id_text[index] == 17:
+            if len(test_x) == 0:
+                test_y.append(literal_eval(df.post_finger_pressure_cycle[index]))
+                test_q.append(literal_eval(df.post_flow[index]))
+                test_t.append(df.true_time_post_flow[index])
+                test_x.append([float(df.roottable_age_value[index]),float(df.roottable_sex_item[index]),float(df.clinical_visits_body_mass_index_value[index]),float(df.clinical_visits_cpet_vo2max_value[index]),float(df.clinical_visits_pre_24h_dbp_mean_value[index]),float(df.clinical_visits_pre_24h_sbp_mean_value[index]),float(df.MeanPAIPerDay[index])])
+            else:
+                train_y.append(literal_eval(df.post_finger_pressure_cycle[index]))
+                train_q.append(literal_eval(df.post_flow[index]))
+                train_t.append(df.true_time_post_flow[index])
+                train_x.append([float(df.roottable_age_value[index]),float(df.roottable_sex_item[index]),float(df.clinical_visits_body_mass_index_value[index]),float(df.clinical_visits_cpet_vo2max_value[index]),float(df.clinical_visits_pre_24h_dbp_mean_value[index]),float(df.clinical_visits_pre_24h_sbp_mean_value[index]),float(df.MeanPAIPerDay[index])])
+                
+        elif df.roottable_case_id_text[index] == 67:
+            if len(pred_x) == 0:
+                pred_y.append(literal_eval(df.post_finger_pressure_cycle[index]))
+                pred_q.append(literal_eval(df.post_flow[index]))
+                pred_t.append(df.true_time_post_flow[index])
+                pred_x.append([float(df.roottable_age_value[index]),float(df.roottable_sex_item[index]),float(df.clinical_visits_body_mass_index_value[index]),float(df.clinical_visits_cpet_vo2max_value[index]),float(df.clinical_visits_pre_24h_dbp_mean_value[index]),float(df.clinical_visits_pre_24h_sbp_mean_value[index]),float(df.MeanPAIPerDay[index])])
+            else:
+                train_y.append(literal_eval(df.post_finger_pressure_cycle[index]))
+                train_q.append(literal_eval(df.post_flow[index]))
+                train_t.append(df.true_time_post_flow[index])
+                train_x.append([float(df.roottable_age_value[index]),float(df.roottable_sex_item[index]),float(df.clinical_visits_body_mass_index_value[index]),float(df.clinical_visits_cpet_vo2max_value[index]),float(df.clinical_visits_pre_24h_dbp_mean_value[index]),float(df.clinical_visits_pre_24h_sbp_mean_value[index]),float(df.MeanPAIPerDay[index])])
         else:
-            pre_ts.append(literal_eval(df.pre_finger_pressure_cycle[index]))
-            post_ts.append(literal_eval(df.post_finger_pressure_cycle[index]))
-            all_ts.append(literal_eval(df.pre_finger_pressure_cycle[index]))
-            all_ts.append(literal_eval(df.post_finger_pressure_cycle[index]))
-            q_ts.append(literal_eval(df.post_flow[index]))
-            T_s.append(df.true_time_post_flow[index])
-            
-            age = float(df.roottable_age_value[index])
-            gender = float(df.roottable_sex_item[index])
-            PAI = float(df.MeanPAIPerDay[index])
-            bmi = float(df.clinical_visits_body_mass_index_value[index])
-            vo2 = float(df.clinical_visits_cpet_vo2max_value[index])
-            pre_dbp = float(df.clinical_visits_pre_24h_dbp_mean_value[index])
-            pre_sbp = float(df.clinical_visits_pre_24h_sbp_mean_value[index])
-            period = float(df.true_time_post_flow[index])
-            input_variables.append(age)
-            input_variables.append(gender)
-            input_variables.append(bmi)
-            input_variables.append(vo2)
-            input_variables.append(pre_dbp)
-            input_variables.append(pre_sbp)
-            input_variables.append(PAI)
+            train_y.append(literal_eval(df.post_finger_pressure_cycle[index]))
+            train_q.append(literal_eval(df.post_flow[index]))
+            train_t.append(df.true_time_post_flow[index])
+            train_x.append([float(df.roottable_age_value[index]),float(df.roottable_sex_item[index]),float(df.clinical_visits_body_mass_index_value[index]),float(df.clinical_visits_cpet_vo2max_value[index]),float(df.clinical_visits_pre_24h_dbp_mean_value[index]),float(df.clinical_visits_pre_24h_sbp_mean_value[index]),float(df.MeanPAIPerDay[index])])
+        
+    train_y = np.array(train_y)
+    train_q = np.array(train_q)
+    test_y = np.array(test_y)
+    test_q = np.array(test_q)
+    pred_y = np.array(pred_y)
+    pred_q = np.array(pred_q)
+    return train_x, train_y, train_q, train_t,test_x, test_y, test_q, test_t,pred_x, pred_y, pred_q, pred_t
 
-            input_var.append(input_variables) 
-
-    pre_ts = np.array(pre_ts) # all pre pressure curves
-    post_ts = np.array(post_ts) # all post pressure curves
-    all_ts = np.array(all_ts) # all pressure curves
-    q_ts = np.array(q_ts) # all post flow curves
-
-    return input_var, post_ts, q_ts, T_s
-
-def process_data(x_all, y_all, q_all, t_all):
-
-    times = []
-    for time in t_all:
+def process_data(train_x, train_y, train_q, train_t,test_x, test_y, test_q, test_t,pred_x, pred_y, pred_q, pred_t):
+    # Train T
+    times_train = []
+    for time in train_t:
         ts = []
         for x in range(100):
             ts.append(time)
-        times.append(ts)
-    times = np.array(times)
+        times_train.append(ts)
+    times_train = np.array(times_train)
+    # Test T
+    times_test = []
+    for time in test_t:
+        ts = []
+        for x in range(100):
+            ts.append(time)
+        times_test.append(ts)
+    times_test = np.array(times_test)
+    # Pred T
+    times_pred = []
+    for time in pred_t:
+        ts = []
+        for x in range(100):
+            ts.append(time)
+        times_pred.append(ts)
+    times_pred = np.array(times_pred)
 
     # Normalize
     scaler = preprocessing.MinMaxScaler()
-    full_x = scaler.fit_transform(x_all)
+    x = scaler.fit_transform(train_x)
+    x_t = scaler.transform(test_x)
+    x_p = scaler.transform(pred_x)
 
-    y = []
-    for i in range(0,y_all.shape[0],100):
-        y.append(y_all[i:i+100])
-    y = y[0]
+    # Train data
+    y_train = []
+    for i in range(0,train_y.shape[0],100):
+        y_train.append(train_y[i:i+100])
+    y_train = y_train[0]
 
-    x = []
-    for i in range(0,full_x.shape[0],100):
-        x.append(full_x[i:i+100])
-    x = x[0]
+    x_train = []
+    for i in range(0,x.shape[0],100):
+        x_train.append(x[i:i+100])
+    x_train = x_train[0]
 
-    q = []
-    for i in range(0,q_all.shape[0],100):
-        q.append(q_all[i:i+100])
-    q = q[0]
+    q_train = []
+    for i in range(0,train_q.shape[0],100):
+        q_train.append(train_q[i:i+100])
+    q_train = q_train[0]
 
-    t = []
-    for i in range(0,times.shape[0],100):
-        t.append(times[i:i+100])
-    t = t[0]
+    t_train = []
+    for i in range(0,times_train.shape[0],100):
+        t_train.append(times_train[i:i+100])
+    t_train = t_train[0]
+    # Test data
+    y_test = []
+    for i in range(0,test_y.shape[0],100):
+        y_test.append(test_y[i:i+100])
+    y_test = y_test[0]
 
-    dataset = tf.data.Dataset.from_tensor_slices((x, y, q, t))
-    eval_dataset = dataset.take(3) 
-    train_dataset = dataset.skip(3)
+    x_test = []
+    for i in range(0,x_t.shape[0],100):
+        x_test.append(x_t[i:i+100])
+    x_test = x_test[0]
+
+    q_test = []
+    for i in range(0,test_q.shape[0],100):
+        q_test.append(test_q[i:i+100])
+    q_test = q_test[0]
+
+    t_test = []
+    for i in range(0,times_test.shape[0],100):
+        t_test.append(times_test[i:i+100])
+    t_test = t_test[0]
+    # Pred data   
+    y_pred = []
+    for i in range(0,pred_y.shape[0],100):
+        y_pred.append(pred_y[i:i+100])
+    y_pred = y_pred[0]
+
+    x_pred = []
+    for i in range(0,x_p.shape[0],100):
+        x_pred.append(x_p[i:i+100])
+    x_pred = x_pred[0]
+
+    q_pred = []
+    for i in range(0,pred_q.shape[0],100):
+        q_pred.append(pred_q[i:i+100])
+    q_pred = q_pred[0]
+
+    t_pred = []
+    for i in range(0,times_pred.shape[0],100):
+        t_pred.append(times_pred[i:i+100])
+    t_pred = t_pred[0]
+
+    dataset_train = tf.data.Dataset.from_tensor_slices((x_train, y_train, q_train, t_train))
+    dataset_test = tf.data.Dataset.from_tensor_slices((x_test, y_test, q_test, t_test))
+    dataset_pred = tf.data.Dataset.from_tensor_slices((x_pred, y_pred, q_pred, t_pred))
 
     batch_size = 1
-    train_dataset = train_dataset.shuffle(buffer_size=40).batch(batch_size)
-    eval_dataset = eval_dataset.shuffle(buffer_size=40).batch(batch_size)
+    dataset_train = dataset_train.shuffle(buffer_size=40).batch(batch_size)
+    dataset_test = dataset_test.shuffle(buffer_size=40).batch(batch_size)
+    dataset_pred = dataset_pred.shuffle(buffer_size=40).batch(batch_size)
 
-    return train_dataset, eval_dataset
+    return dataset_train, dataset_test, dataset_pred
 
 def create_model():
     inputs = keras.Input(shape=(None,7), name="features_components")
@@ -169,7 +237,7 @@ def evaluate(pred, true):
     pp_true = sbp_true-dbp_true
     MAP_true = np.mean(true)
 
-    total_cycle_error = sum(abs(pred-true))
+    point_error = abs(pred-true)
     dbp_error = abs(dbp-dbp_true)
     sbp_error = abs(sbp-sbp_true)
     pp_error = abs(pp-pp_true)
@@ -197,36 +265,53 @@ def evaluate(pred, true):
             FN += 1
         else:
             TN += 1
-
+    
     plt.plot(pred, color='darkorange', label = 'Prediction')
     plt.plot(true, color='midnightblue', label= 'True curve')
     plt.legend()
     plt.title('Model with MSE loss')
     plt.xlabel('Time points [-]')
-    plt.ylabel('Blood Pressure [mmHg]')
+    plt.ylabel('Blood pressure [mmHg]')
+    plt.gcf().set_dpi(200)
     plt.show()
+    
     print('DBP error = ', np.mean(dbp_error))
     print('SBP error = ', np.mean(sbp_error))
     print('PP error = ', np.mean(pp_error))
     print('MAP error = ', np.mean(MAP_error))
-    print('Total error = ', np.mean(total_cycle_error))
-    print('True positives = ', TP)
-    print('False positives = ', FP)
-    print('True negatives = ', TN)
-    print('False negatives = ', FN)
+    print('Point error = ', np.mean(point_error))
     print('\n')
+    return np.mean(point_error)
 
 
 
-x, y, q, t = get_data()
-train_dataset, eval_dataset = process_data(x, y, q, t)
-model = create_model()
-train(model,epochs = 100)
+train_x, train_y, train_q, train_t,test_x, test_y, test_q, test_t,pred_x, pred_y, pred_q, pred_t = get_data()
+train_dataset, test_dataset, pred_dataset = process_data(train_x, train_y, train_q, train_t,test_x, test_y, test_q, test_t,pred_x, pred_y, pred_q, pred_t)
+'''
+best_error = np.inf
+for i in range(10):
+    print('-----------------')
+    print('LOOP ', i)
+    print('-----------------')
+    model = create_model()
+    train(model,epochs = 100)
+    for (x,y,q,t) in list(test_dataset.as_numpy_iterator()):
+        pred = model(x)
+        error = evaluate(pred.numpy().flatten(),y[0])
+    if error < best_error:
+        print('\n New best error on number ',i,'. Error = ', error, '\n')
+        model.save_weights('Data/mse_weights_67_17')
+        best_error = error
+print('The best error is: ', best_error)
 
-for (x,y,q,t) in list(eval_dataset.as_numpy_iterator()):
+'''
+for (x,y,q,t) in list(pred_dataset.as_numpy_iterator()):
+    model = create_model()
+    model.load_weights('Data/mse_weights_17_67')
     pred = model(x)
-    evaluate(pred.numpy().flatten(),y[0])
-
+    error = evaluate(pred.numpy().flatten(),y[0])
+    print('Final error: ', error)
+quit()
 
 plt.plot(loss_history)
 plt.xlabel('Batch #')

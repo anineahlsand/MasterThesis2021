@@ -38,17 +38,17 @@ def person_to_predict(df, training_set, labels):
                     (df['clinical_visits_cpet_vo2max_value'] == vo2) & (df['clinical_visits_pre_24h_dbp_mean_value'] == dbp) & (df['clinical_visits_pre_24h_sbp_mean_value'] == sbp)]).sort_values(by=['exercise_value'])
     one_person = one_person[['roottable_age_value', 'roottable_sex_item','clinical_visits_body_mass_index_value','clinical_visits_cpet_vo2max_value',
                                 'clinical_visits_pre_24h_dbp_mean_value','clinical_visits_pre_24h_sbp_mean_value' ,'exercise_value','mm_post_finger_pressure_cycle']]
-    age_2 = training_set.iloc[6,0]
-    gender_2 = training_set.iloc[6,1]
-    bmi_2 = training_set.iloc[6,2]
-    vo2_2 = training_set.iloc[6,3]
-    dbp_2 = training_set.iloc[6,4]
-    sbp_2 = training_set.iloc[6,5]
+    age_2 = training_set.iloc[13,0]
+    gender_2 = training_set.iloc[13,1]
+    bmi_2 = training_set.iloc[13,2]
+    vo2_2 = training_set.iloc[13,3]
+    dbp_2 = training_set.iloc[13,4]
+    sbp_2 = training_set.iloc[13,5]
     second_person = (df.loc[(df['roottable_age_value'] == age_2) & (df['roottable_sex_item'] == gender_2) & (df['clinical_visits_body_mass_index_value'] == bmi_2) & 
                     (df['clinical_visits_cpet_vo2max_value'] == vo2_2) & (df['clinical_visits_pre_24h_dbp_mean_value'] == dbp_2) & (df['clinical_visits_pre_24h_sbp_mean_value'] == sbp_2)]).sort_values(by=['exercise_value'])
     second_person = second_person[['roottable_age_value', 'roottable_sex_item','clinical_visits_body_mass_index_value','clinical_visits_cpet_vo2max_value',
                                 'clinical_visits_pre_24h_dbp_mean_value','clinical_visits_pre_24h_sbp_mean_value' ,'exercise_value','mm_post_finger_pressure_cycle']]
-
+ 
     test_pers = pd.DataFrame().reindex_like(one_person)
     pred_pers = pd.DataFrame().reindex_like(second_person)
     drop_ind = []
@@ -119,8 +119,8 @@ def get_x_y(training_set, labels, x_test_pers, y_test_pers, x_pred_pers, y_pred_
         y_post.append(literal_eval(raw_curve_post))
 
     # Choose share of dataset for training
-    x_norm, y_post = zip(*random.sample(list(zip(list(x_norm), y_post)), int(x_norm.shape[0]*0.6)))
-    x_norm = np.array(x_norm).reshape(len(x_norm),len(x_norm[0]))
+    #x_norm, y_post = zip(*random.sample(list(zip(list(x_norm), y_post)), int(x_norm.shape[0]*0.01)))
+    #x_norm = np.array(x_norm).reshape(len(x_norm),len(x_norm[0]))
     
     print('Train shape: ', x_norm.shape)
     # Split into train and test
@@ -134,6 +134,11 @@ def get_x_y(training_set, labels, x_test_pers, y_test_pers, x_pred_pers, y_pred_
     y_val = np.array(y_val)
     y_test = np.array(y_test)
     y_pred = np.array(y_pred)
+
+    x_train, y_train = shuffle(x_train, y_train)
+    x_test, y_test = shuffle(x_test, y_test)
+    x_val, y_val = shuffle(x_val, y_val)
+    x_pred, y_pred = shuffle(x_pred, y_pred)
    
     return x_train, x_val, x_test, x_pred, y_train, y_val, y_test, y_pred
 
@@ -228,11 +233,11 @@ def predict(x_predict, y_predict):
     
     point_error = [item for sublist in point_error for item in sublist]
     
-    print('DBP error = ', np.mean(dbp_error), np.std(dbp_error))
-    print('SBP error = ', np.mean(sbp_error), np.std(sbp_error))
-    print('PP error = ', np.mean(pp_error), np.std(pp_error))
-    print('MAP error = ', np.mean(MAP_error), np.std(MAP_error))
-    print('Point error = ', np.mean(point_error), np.std(point_error))
+    print('DBP error = ', np.mean(dbp_error))#, np.std(dbp_error))
+    print('SBP error = ', np.mean(sbp_error))#, np.std(sbp_error))
+    print('PP error = ', np.mean(pp_error))#, np.std(pp_error))
+    print('MAP error = ', np.mean(MAP_error))#, np.std(MAP_error))
+    print('Point error = ', np.mean(point_error))#, np.std(point_error))
     print('True positives = ', TP)
     print('False positives = ', FP)
     print('True negatives = ', TN)
@@ -246,24 +251,23 @@ df = get_data()
 training_set, labels = split_data(df)
 x_test_pers, y_test_pers, x_pred_pers, y_pred_pers, training_set, labels = person_to_predict(df, training_set, labels)
 x_train, x_val, x_test, x_pred, y_train, y_val, y_test, y_pred = get_x_y(training_set, labels, x_test_pers, y_test_pers, x_pred_pers, y_pred_pers)
-'''
+
 best_error = np.inf
-for i in range(100):
+for i in range(10):
     model = create_model()
     model = fit_model(model,x_train,x_val,y_train,y_val)
     error = predict(x_test, y_test)
     #if error < this_best:
     if error < best_error:
         print('\n New best error on number ',i,'. Error = ', error, '\n')
-        model.save_weights('Data/synth_weights_10_1')
+        model.save_weights('Data/synth_weights_1_10_5')
         best_error = error
 print('The best error is: ', best_error)
 
-quit()
-'''
+
 model = create_model()
-model.load_weights('Data/synth_weights_10_60')
-error = predict(x_test, y_test)
-#print('The error of prediction is: ', error)
+model.load_weights('Data/synth_weights_1_10_5')
+error = predict(x_pred, y_pred)
+print('The error of prediction is: ', error)
 
     
