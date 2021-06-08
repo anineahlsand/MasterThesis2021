@@ -48,14 +48,14 @@ def get_data():
     for index, row in df.iterrows():
         if sum(literal_eval(df.true_post_finger_pressure_cycle[index])) == 0:
             continue
-        if (df.roottable_case_id_text.values[index]) == 17:
+        if (df.roottable_case_id_text.values[index]) == 217:
             testing_pers.append([df.roottable_age_value.values[index], df.roottable_sex_item.values[index], df.clinical_visits_body_mass_index_value.values[index], df.clinical_visits_cpet_vo2max_value.values[index],
                             df.clinical_visits_pre_24h_dbp_mean_value.values[index], df.clinical_visits_pre_24h_sbp_mean_value.values[index], df.exercise_value.values[index]])
             testing_lables.append(literal_eval(df.estimate_error[index]))
             testing_post_MM.append(literal_eval(df.mm_post_finger_pressure_cycle[index]))
             testing_post_true.append(literal_eval(df.true_post_finger_pressure_cycle[index]))
             testing_id.append(df.roottable_case_id_text.values[index])
-        if (df.roottable_case_id_text.values[index]) == 67:
+        elif (df.roottable_case_id_text.values[index]) == 67:
             evaluating_pers.append([df.roottable_age_value.values[index], df.roottable_sex_item.values[index], df.clinical_visits_body_mass_index_value.values[index], df.clinical_visits_cpet_vo2max_value.values[index],
                             df.clinical_visits_pre_24h_dbp_mean_value.values[index], df.clinical_visits_pre_24h_sbp_mean_value.values[index], df.exercise_value.values[index]])
             evaluating_lables.append(literal_eval(df.estimate_error[index]))
@@ -86,7 +86,7 @@ def get_data():
     # PCA
     pca_model = PCA(0.95)
     pca_model.fit(ts_wo_mean)
-    loadings = pca_model.transform(pre_ts_wo_mean) 
+    loadings = pca_model.transform(pre_ts_wo_mean) # number of components: 4
 
     min_max_scaler = MinMaxScaler()
     x_norm = min_max_scaler.fit_transform(x_values)
@@ -98,7 +98,6 @@ def get_data():
     return train_x, train_y, post_ts_MM, post_ts_true, min_max_scaler 
 train_x, train_y, post_ts_MM, post_ts_true, min_max_scaler = get_data()
 print('Predicting for person with trial ID: ', evaluating_id[0])
-
 
 def create_model():
     ### FUNCTIONAL API MODEL ###
@@ -112,6 +111,7 @@ def create_model():
     model.compile(loss=loss_function, optimizer=optimizer)
 
     return model
+# model = create_model()
 
 def fit_model(model):
     history = model.fit(train_x, train_y, epochs=no_epochs, batch_size=batch_size, verbose=0)
@@ -122,6 +122,7 @@ def fit_model(model):
     # print('Train loss: %.3f, Test: %.3f' % (train_mse, test_mse))
 
     return model
+# model = fit_model()
 
 def create_model_saved_weights():
     inputs = keras.Input(shape=(7,))
@@ -140,24 +141,26 @@ def create_model_saved_weights():
     return model
 
 ## TESTING ##
-def predict(predict_pers_x, predict_pers_y, model, post_ts_MM, post_ts_true):
+def predict(predict_pers_x, predict_pers_y, model, post_ts_MM, post_ts_true, i):
     predict_pers_xx = predict_pers_x.reshape(predict_pers_x.shape[0], 1)
     prediction = model.predict(predict_pers_xx.T)
     
-    plt.plot(prediction[0], 'g')
-    plt.plot(predict_pers_y[0], 'b')
-    plt.show()
-    
     adding_prediction = [b - a for a, b in zip(prediction[0], post_ts_MM[0])]
 
-    plt.plot(adding_prediction, color='darkorange', label = 'Prediction')
-    plt.plot(post_ts_true[0], color='midnightblue', label= 'True curve')
-    plt.plot(post_ts_MM[0], color='crimson', label='Mechanistic model estimate')
-    plt.legend()
-    plt.title('Residual model with real data')
-    plt.xlabel('Time points [-]')
-    plt.ylabel('Blood Pressure [mmHg]')
-    plt.show()
+    if i == 1:
+        plt.plot(prediction[0], 'g')
+        plt.plot(predict_pers_y[0], 'b')
+        plt.show()
+
+        plt.plot(adding_prediction, color='darkorange', label = 'Prediction')
+        plt.plot(post_ts_true[0], color='midnightblue', label= 'True curve')
+        plt.plot(post_ts_MM[0], color='crimson', label='Mechanistic model estimate')
+        plt.legend()
+        plt.title('Residual model with real data')
+        plt.xlabel('Time points [-]')
+        plt.ylabel('Blood pressure [mmHg]')
+        plt.gcf().set_dpi(200)
+        plt.show()
 
     # Calculate erorrs
     dbp = min(adding_prediction)
@@ -184,18 +187,18 @@ def predict(predict_pers_x, predict_pers_y, model, post_ts_MM, post_ts_true):
     print('Total error = ', np.mean(total_cycle_error), np.std(total_cycle_error))
 
     return np.mean(total_cycle_error)
-
+# error = predict()
 
 
 ## RUN SEVERAL TIMES AND SAVE THE BEST MODEL ##
 '''
-best_error = 3000
+best_error = 4000
 evaluating_pers = np.array(evaluating_pers) 
 evaluating_pers = min_max_scaler.transform(evaluating_pers)
 for i in range(30):
     model_eval = create_model()
     model_fitted = fit_model(model_eval)
-    error = predict(evaluating_pers.T, evaluating_lables, model_fitted, evaluating_post_MM, evaluating_post_true)
+    error = predict(evaluating_pers.T, evaluating_lables, model_fitted, evaluating_post_MM, evaluating_post_true, 0)
     print('Iteration: ', i, ' with error: ', error)
     if error < best_error:
         print('New best error on number ', i,'. Error = ', error)
@@ -211,4 +214,4 @@ testing_lables = np.array(testing_lables)
 model_test = create_model_saved_weights()
 print('Testing on person with trial ID: ', testing_id[0])
 print(testing_pers.T)
-error1 = predict(testing_pers.T, testing_lables, model_test, testing_post_MM, testing_post_true)
+error1 = predict(testing_pers.T, testing_lables, model_test, testing_post_MM, testing_post_true, 1)

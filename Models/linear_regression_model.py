@@ -7,9 +7,11 @@ from ast import literal_eval
 import my_functions
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+# os.system("my_functions.py")
 np.set_printoptions(threshold=np.inf)
 
-df = pd.read_csv('../../Master/Master2021/Data/full_data_set_double.csv', header=0)
+# df = pd.read_csv('../../Master/Master2021/Data/full_data_set.csv', header=0)
+df = pd.read_csv('Data/full_data_set_double.csv', header=0)
 df = df.sort_values(by=['roottable_case_id_text'])
 df.reset_index(drop=True,inplace=True)
 
@@ -33,12 +35,13 @@ for index, row in df.iterrows():
         continue
     if pd.isna(row['clinical_visits_pre_24h_sbp_mean_value']) or pd.isna(row['clinical_visits_pre_24h_dbp_mean_value']):
         continue
-    if df.roottable_case_id_text.values[index] == 59:
+    if df.roottable_case_id_text.values[index] == 647:
         x_test.append([df.roottable_age_value.values[index], df.roottable_sex_item.values[index], df.clinical_visits_body_mass_index_value.values[index], df.clinical_visits_cpet_vo2max_value.values[index],
                     df.clinical_visits_pre_24h_dbp_mean_value.values[index], df.clinical_visits_pre_24h_sbp_mean_value.values[index], df.MeanPAIPerDay.values[index]])
         pre_test.append(literal_eval(df.pre_finger_pressure_cycle[index]))
         post_test.append(literal_eval(df.post_finger_pressure_cycle[index]))
         id_test.append(df.roottable_case_id_text.values[index])
+        continue
     if df.roottable_case_id_text.values[index] == 51:
         continue
     if df.roottable_case_id_text.values[index] == 93:
@@ -95,6 +98,7 @@ beta = model_linear.coef_
 beta_0 = model_linear.intercept_
 
 
+
 point_error = []
 total_cycle_error = []
 dbp_error = []
@@ -119,9 +123,10 @@ for point in range(len(predicted_ts)):
 plt.plot(predicted_ts_new, color='darkorange', label = 'Prediction')
 plt.plot(post_test[0], color='midnightblue', label= 'True curve')
 plt.legend()
-plt.title('Linear Regression')
+plt.title('Linear regression')
 plt.xlabel('Time points [-]')
-plt.ylabel('Blood Pressure [mmHg]')
+plt.ylabel('Blood pressure [mmHg]')
+plt.gcf().set_dpi(200)
 plt.show()
 
 

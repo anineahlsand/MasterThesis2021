@@ -47,7 +47,7 @@ def get_data():
     id_pred = []
 
     for index, row in df.iterrows():
-        if df.roottable_case_id_text.values[index] == 17:
+        if df.roottable_case_id_text.values[index] == 278:
             x_pred.append([df.roottable_age_value.values[index], df.roottable_sex_item.values[index], df.clinical_visits_body_mass_index_value.values[index], df.clinical_visits_cpet_vo2max_value.values[index],
                         df.clinical_visits_pre_24h_dbp_mean_value.values[index], df.clinical_visits_pre_24h_sbp_mean_value.values[index], df.exercise_value.values[index]])
             y_pred.append(literal_eval(df.estimate_error[index]))
@@ -80,9 +80,9 @@ def get_data():
     x_test = min_max_scaler.transform(x_test)
     x_pred = min_max_scaler.transform(x_pred)
 
-    x_train, y_train = zip(*random.sample(list(zip(list(x_train), y_train)), int(x_train.shape[0]*0.2)))
-    x_train = np.array(x_train).reshape(len(x_train),len(x_train[0]))
-    y_train = np.array(y_train).reshape(len(y_train),len(y_train[0]))
+    # x_train, y_train = zip(*random.sample(list(zip(list(x_train), y_train)), int(x_train.shape[0]*0.2)))
+    # x_train = np.array(x_train).reshape(len(x_train),len(x_train[0]))
+    # y_train = np.array(y_train).reshape(len(y_train),len(y_train[0]))
     
     return x_train, x_test, x_pred, y_train, y_test, y_pred, MM_train, MM_test, MM_pred, wk_train, wk_test, wk_pred, id_pred, id_test
 
@@ -155,14 +155,20 @@ def predict(x, y, wk, MM, model, plot):
             plt.plot(prediction[0], 'g', linewidth=2)
             plt.plot(y[pers],'b')
             plt.show()
-
+            '''
+            plt.plot(adding_prediction, 'g')
+            plt.plot(MM[pers], 'b')
+            plt.plot(wk[pers], 'r')
+            plt.show()
+            '''
             plt.plot(adding_prediction, color='darkorange', label = 'Prediction')
             plt.plot(MM[pers], color='midnightblue', label= 'True curve')
             plt.plot(wk[pers], color='crimson', label= 'Windkessel model estimate')
             plt.legend()
             plt.title('Residual model with synthetic data')
             plt.xlabel('Time points [-]')
-            plt.ylabel('Blood Pressure [mmHg]')
+            plt.ylabel('Blood pressure [mmHg]')
+            plt.gcf().set_dpi(200)
             plt.show()
 
 
@@ -221,7 +227,7 @@ x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.
 
 
 ## RUN SEVERAL TIMES AND SAVE THE WEIGHTS FOR THE BEST PERFORMING MODEL ##
-'''
+
 best_error = 5000
 for i in range(20):
     model_create = create_model()
@@ -234,7 +240,6 @@ for i in range(20):
         best_error = error
 print('The best error achieved was: ', best_error)
 
-'''
 
 ## EVALUATE ON PERSON LEFT OUT ## 
 print('Model with weights from: ', id_test[0])
